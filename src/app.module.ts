@@ -1,17 +1,35 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { MongooseModule } from '@nestjs/mongoose';
+import { ConfigModule } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
+import { CommandModule } from 'nestjs-command';
 import { AuthModule } from './auth/auth.module';
-import { UsersController } from './users/users.controller';
-import { UsersService } from './users/users.service';
-import { ChatsModule } from './chats/chats.module';
-import { AuthController } from './auth/auth.controller';
-import { AuthService } from './auth/auth.service';
 import { UsersModule } from './users/users.module';
+import { ChatsModule } from './chats/chats.module';
+import { RoomsModule } from './rooms/rooms.module';
 
 @Module({
-  imports: [AuthModule, ChatsModule, UsersModule],
-  controllers: [AppController, UsersController, AuthController],
-  providers: [AppService, UsersService, AuthService],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    MongooseModule.forRoot(process.env.DB_URL, {
+      connectionFactory: (connection) => {
+        connection.plugin(require('mongoose-autopopulate'));
+        return connection;
+      },
+    }),
+    JwtModule.register({
+      secret: process.env.SECRET_KEY,
+      signOptions: { expiresIn: '1h' },
+    }),
+    CommandModule,
+    UsersModule,
+    // InterestsModule,
+    AuthModule,
+    RoomsModule,
+    ChatsModule,
+  ],
 })
 export class AppModule {}
